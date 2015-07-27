@@ -9,32 +9,32 @@ Lets you have a reverse ActiveModel::Sereializer-like interface that allows for 
 Let's say we have a bad API create endpoint that takes json that looks something like
 
 ```json
-  {
-    "restaurant_id" : 13
-    "user_id"       : 6
-    # field name different from model
-    "dish_name"     : "risootton con funghi"
-    "description"   : "repulsive beyond belief"
-    "ratings"       : {
-                        "taste"   : "terrible"
-                        "color"   : "repulsive"
-                        "texture" : "vile"
-                        "smell"   : "delightful, somehow"
-                      }
-  }
+{
+  "restaurant_id" : 13
+  "user_id"       : 6
+  # field name different from model
+  "dish_name"     : "risootton con funghi"
+  "description"   : "repulsive beyond belief"
+  "ratings"       : {
+                      "taste"   : "terrible"
+                      "color"   : "repulsive"
+                      "texture" : "vile"
+                      "smell"   : "delightful, somehow"
+                    }
+}
 ```
 
 that goes into a flat DishReview model that looks like
 
-```ruby  
-  t.belongs_to  :restaurant
-  t.belongs_to  :user
-  t.string      :name
-  t.string      :description
-  t.string      :taste
-  t.string      :color
-  t.string      :texture
-  t.string      :smell
+```ruby
+t.belongs_to  :restaurant
+t.belongs_to  :user
+t.string      :name
+t.string      :description
+t.string      :taste
+t.string      :color
+t.string      :texture
+t.string      :smell
 ```
 
 what do we do?
@@ -42,55 +42,55 @@ what do we do?
 Normally, we'd have some params we permit, do some parsing and feed those into DishReview.new, like
 
 ``` ruby
-  class DishReviewController < BaseController
+class DishReviewController < BaseController
 
-    def create
-      review_params = get_review_params(params)
-      @review = ProfessionalReview.new(review_params)
-      if @review.save
-        # return review
-      else
-        # return sad errors splody
-      end
-    end
-
-    # rest of RUD
-
-    protected
-
-    def permitted_params
-     [
-        :restaurant_id,
-        :user_id
-        :dish_name,
-        :description,
-        :taste,
-        :color,
-        :texture,
-        :smell
-      ]
-    end
-
-    def get_review_params(params)
-      review_params = params.require(:review)
-
-      review_params[:name] ||= review_params.delete(:dish_name)
-
-      ratings = review_params.delete(:ratings)
-      if (ratings.present?)
-        ratings.each{|rating, value| review_params[rating] = value if valid_rating?(rating) }
-      end
-
-      review_params.permit(permitted_params)
-    end
-
-    def valid_rating?(rating)
-      @@rating_short_names ||= ["overall", "trusthworthy", "responsive", "knowledgeable", "communication"]
-
-      @@rating_short_names.include? rating
-
+  def create
+    review_params = get_review_params(params)
+    @review = ProfessionalReview.new(review_params)
+    if @review.save
+      # return review
+    else
+      # return sad errors splody
     end
   end
+
+  # rest of RUD
+
+  protected
+
+  def permitted_params
+   [
+      :restaurant_id,
+      :user_id
+      :dish_name,
+      :description,
+      :taste,
+      :color,
+      :texture,
+      :smell
+    ]
+  end
+
+  def get_review_params(params)
+    review_params = params.require(:review)
+
+    review_params[:name] ||= review_params.delete(:dish_name)
+
+    ratings = review_params.delete(:ratings)
+    if (ratings.present?)
+      ratings.each{|rating, value| review_params[rating] = value if valid_rating?(rating) }
+    end
+
+    review_params.permit(permitted_params)
+  end
+
+  def valid_rating?(rating)
+    @@rating_short_names ||= ["overall", "trusthworthy", "responsive", "knowledgeable", "communication"]
+
+    @@rating_short_names.include? rating
+
+  end
+end
 ```
 
 and that's fine, but kind of annoying, and you have to do this for every action. It makes the controllers heavy, hard to parse, fragile, and really do things that are no longer controller-y. 
@@ -107,20 +107,20 @@ Deserializer acts and looks pretty mich identical to ActiveModel::Serializer. It
 This is straight 1:1 mapping from params to the model, so 
 
 ```ruby
-  class PostDeserializer < Deserializer::Base
-    attributes  :title,
-                :body
-  end
+class PostDeserializer < Deserializer::Base
+  attributes  :title,
+              :body
+end
 ```
 with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of {title: "lorem", body: "ipsum"}.
 
 #### attribute
 `attribute` is the singular version of `attributes`, but like `ActiveModel::Serializer` it can take a `:key`
 ```ruby
-  class PostDeserializer < Deserializer::Base
-    attribute :title
-    attribute :body, key: :text
-  end
+class PostDeserializer < Deserializer::Base
+  attribute :title
+  attribute :body, key: :text
+end
 ```
 It is symmetric with `ActiveModel::Serializer`, so that :text is what it will get in params, but :body is what it will insert into the result. 
 

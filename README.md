@@ -2,7 +2,7 @@
 
 Deserialization of complex parameters into a hash that an AR model can take. 
 
-Lets you have a reverse ActiveModel::Sereializer-like interface that allows for eacy create and update without having to write heavy controllers.
+Lets you have a reverse ActiveModel::Sereializer-like interface that allows for easy create and update without having to write heavy controllers.
 
 ## Problem
 
@@ -85,9 +85,9 @@ class DishReviewController < BaseController
   end
 
   def valid_rating?(rating)
-    @@rating_short_names ||= ["overall", "trusthworthy", "responsive", "knowledgeable", "communication"]
+    @@ratings ||= ["overall", "trusthworthy", "responsive", "knowledgeable", "communication"]
 
-    @@rating_short_names.include? rating
+    @@ratings.include? rating
 
   end
 end

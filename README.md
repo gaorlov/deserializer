@@ -10,14 +10,14 @@ Let's say we have a bad API create endpoint that takes json that looks something
 
 ```json
 {
-  "restaurant_id" : 13
-        "user_id" : 6
-      "dish_name" : "risootton con funghi"
-    "description" : "repulsive beyond belief"
+  "restaurant_id" : 13,
+        "user_id" : 6,
+      "dish_name" : "risootton con funghi",
+    "description" : "repulsive beyond belief",
         "ratings" : {
-                        "taste" : "terrible"
-                        "color" : "repulsive"
-                      "texture" : "vile"
+                        "taste" : "terrible",
+                        "color" : "repulsive",
+                      "texture" : "vile",
                         "smell" : "delightful, somehow"
                     }
 }

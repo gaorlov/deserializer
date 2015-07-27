@@ -11,15 +11,15 @@ Let's say we have a bad API create endpoint that takes json that looks something
 ```json
 {
   "restaurant_id" : 13
-  "user_id"       : 6
-  # field name different from model
-  "dish_name"     : "risootton con funghi"
-  "description"   : "repulsive beyond belief"
-  "ratings"       : {
-                      "taste"   : "terrible"
-                      "color"   : "repulsive"
+        "user_id" : 6
+      // field name different from model
+      "dish_name" : "risootton con funghi"
+    "description" : "repulsive beyond belief"
+        "ratings" : {
+                        "taste" : "terrible"
+                        "color" : "repulsive"
                       "texture" : "vile"
-                      "smell"   : "delightful, somehow"
+                        "smell" : "delightful, somehow"
                     }
 }
 ```
@@ -131,126 +131,126 @@ For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrer
 NOTE: This is the only association currently supported by `Deserializer`.
 `has_one` expects the param and its deserializer. So for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
 ```ruby 
-  class DishDeserializer < Deserializer::Base
-    # probably other stuff
-    has_one :ratings, deserializer: RatingsDeserializer
-  end
+class DishDeserializer < Deserializer::Base
+  # probably other stuff
+  has_one :ratings, deserializer: RatingsDeserializer
+end
 
-  class RatingsDeserializer < Deserializer::Base
-    attributes  :taste,
-                :smell
-  end
+class RatingsDeserializer < Deserializer::Base
+  attributes  :taste,
+              :smell
+end
 ```
 you would get `{ratings: {taste: "bad", smell: "good"}}`
 
 #### Overriding Attribute Methods
 So let's say in the example above, your internal representation of ratings inside `Dish` is actually called `scores`, you can do
 ```ruby
-  class DishDeserializer < Deserializer::Base
-    has_one :ratings, deserializer: RatingsDeserializer
+class DishDeserializer < Deserializer::Base
+  has_one :ratings, deserializer: RatingsDeserializer
 
-    def ratings
-      :scores
-    end
+  def ratings
+    :scores
   end
+end
 ```
 which will give you `{scores: {taste: "bad", smell: "good"}}`
 
 or, if you want to deserialize `ratings` into your `dish` object, you can use `object`
 
 ```ruby
-  class DishDeserializer < Deserializer::Base
-    has_one :ratings, deserializer: RatingsDeserializer
+class DishDeserializer < Deserializer::Base
+  has_one :ratings, deserializer: RatingsDeserializer
 
-    def ratings
-      object
-    end
+  def ratings
+    object
   end
+end
 ```
 which will give you `{taste: "bad", smell: "good"}`
 
 or you can deserialize into another subobject by doing
 ```ruby
-  class DishDeserializer < Deserializer::Base
-    has_one :colors,  deserializer: ColorsDeserializer
-    has_one :ratings, deserializer: RatingsDeserializer
+class DishDeserializer < Deserializer::Base
+  has_one :colors,  deserializer: ColorsDeserializer
+  has_one :ratings, deserializer: RatingsDeserializer
 
-    def colors
-      object[:ratings]
-    end
+  def colors
+    object[:ratings]
   end
+end
 ```
 which, given params 
 ```
-  { 
-    "ratings" => 
-      { 
-        "taste" => "bad",
-        "smell" => "good"
-      }, 
-    "colors" => 
-      { 
-        "color" => "red"
-      }
-  }
+{ 
+  "ratings" => 
+    { 
+      "taste" => "bad",
+      "smell" => "good"
+    }, 
+  "colors" => 
+    { 
+      "color" => "red"
+    }
+}
 ```
 , will give you `{ratings: {taste: "bad", smell: "good", color: "red"}}`
-  
+
 ### Example
 
 So the example above will combine all of those to look like 
 
 ```ruby
-  module MyApi
-    module Vsomething
-      class DishReviewDeserializer < Deserializer::Base
-        attributes  :restaurant_id
-                    :user_id
-                    :description
+module MyApi
+  module Vsomething
+    class DishReviewDeserializer < Deserializer::Base
+      attributes  :restaurant_id
+                  :user_id
+                  :description
 
-        attribute   :name, key: :dish_name
+      attribute   :name, key: :dish_name
 
-        has_one :ratings, :deserializer => RatingsDeserializer
+      has_one :ratings, :deserializer => RatingsDeserializer
 
-        def ratings
-          object
-        end
-
+      def ratings
+        object
       end
+
     end
   end
+end
 ```
 
 where RatingsDeserializer looks like
 
 ```ruby
-  module MyApi
-    module Vsomething
-      class RatingsDeserializer < Deserializer::Base
+module MyApi
+  module Vsomething
+    class RatingsDeserializer < Deserializer::Base
 
-        attributes  :taste,
-                    :color,
-                    :texture,
-                    :smell
-      end
+      attributes  :taste,
+                  :color,
+                  :texture,
+                  :smell
     end
   end
+end
 ```
 
 All of this allows your controller to be so very small, like
 
 ```ruby
-  class DishReviewsController < YourApiController::Base
-    def create
-      @review = DishReview.new( MyApi::Vsomething::DishReviewDeserailzer.from_params(params) )
+class DishReviewsController < YourApiController::Base
+  def create
+    @review = DishReview.new( MyApi::Vsomething::DishReviewDeserailzer.from_params(params) )
 
-      if @review.save
-        # return review
-      else
-        # return sad errors splody
-      end
+    if @review.save
+      # return review
+    else
+      # return sad errors splody
     end
-
-    # rest of RUD
   end
+
+  # rest of RUD
+end
 ```

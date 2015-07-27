@@ -12,7 +12,6 @@ Let's say we have a bad API create endpoint that takes json that looks something
 {
   "restaurant_id" : 13
         "user_id" : 6
-      // field name different from model
       "dish_name" : "risootton con funghi"
     "description" : "repulsive beyond belief"
         "ratings" : {
@@ -29,6 +28,7 @@ that goes into a flat DishReview model that looks like
 ```ruby
 t.belongs_to  :restaurant
 t.belongs_to  :user
+# field name different from API
 t.string      :name
 t.string      :description
 t.string      :taste

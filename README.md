@@ -6,7 +6,7 @@ Lets you have a reverse ActiveModel::Sereializer-like interface that allows for 
 
 ## Problem
 
-Let's say we have a bad API create endpoint that takes json that looks something like
+Let's say we have a API create endpoint that takes json that looks something like
 
 ```json
 {

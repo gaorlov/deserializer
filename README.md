@@ -124,7 +124,7 @@ class PostDeserializer < Deserializer::Base
               :body
 end
 ```
-with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of {title: "lorem", body: "ipsum"}`.
+with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of `{title: "lorem", body: "ipsum"}`.
 
 #### attribute
 `attribute` is the singular version of `attributes`, but like `ActiveModel::Serializer` it can take a `:key`

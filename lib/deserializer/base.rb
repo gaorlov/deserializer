@@ -21,17 +21,19 @@ module Deserializer
       def has_one( target, opts = {})
         deserializer = opts[:deserializer]
 
-        raise "has_one associations need a deserilaizer" unless deserializer
+        unless deserializer
+          raise DeserializerError, class: self, message: "has_one associations need a deserilaizer" 
+        end
 
         self.attrs[target] = deserializer
       end
 
       def has_many(*args)
-        raise "has_many is currently unsupported."
+        raise DeserializerError, class: self, message: "has_many is currently unsupported."
       end
 
       def belongs_to(*args)
-        raise "belongs_to is urrently unsupported"
+        raise DeserializerError, class: self, message: "belongs_to is currently unsupported."
       end
 
       # deserializer usage functions
@@ -70,7 +72,9 @@ module Deserializer
 
 
     def initialize( object = {}, params = {})
-      raise "#{self.class} error: params cannot be nil" unless params
+      unless params
+        raise DeserializerError, class: self.class, message: "params cannot be nil"
+      end
 
       self.params = params.deep_symbolize_keys
       self.object = object

@@ -2,54 +2,57 @@ module Deserializer
   class Base
     class << self
       attr_accessor :attrs
-    end
+    
+      # deserializer interface functions
 
-    # deserializer interface functions
-
-    def self.attributes(*attrs)
-      self.attrs ||= {}
-      attrs.each do |attr|
-        self.attrs[attr] = attr
+      def attributes(*attrs)
+        self.attrs ||= {}
+        attrs.each do |attr|
+          self.attrs[attr] = attr
+        end
       end
-    end
 
-    def self.attribute(attr, options = {})
-      self.attrs ||= {}
-      key = options.fetch(:key, attr)
-      self.attrs[key] = attr
-    end
+      def attribute(attr, options = {})
+        self.attrs ||= {}
+        key = options.fetch(:key, attr)
+        self.attrs[key] = attr
+      end
 
-    def self.has_one( target, opts = {})
-      deserializer = opts[:deserializer]
+      def has_one( target, opts = {})
+        deserializer = opts[:deserializer]
 
-      raise "has_one associations need a deserilaizer" unless deserializer
+        raise "has_one associations need a deserilaizer" unless deserializer
 
-      attrs[target] = deserializer
+        self.attrs[target] = deserializer
+      end
 
-    end
+      def has_many(*args)
+        raise "has_many is currently unsupported."
+      end
 
-    def self.has_many(*args)
-      raise "has_many is currently unsupported."
-    end
+      def belongs_to(*args)
+        raise "belongs_to is urrently unsupported"
+      end
 
-    def self.belongs_to(*args)
-      raise "belongs_to is urrently unsupported"
+      # deserializer usage functions
+
+      def from_params( params = {} )
+        self.new({}, params).deserialize
+      end
+
+      def permitted_params
+        self.attrs.keys
+      end
+
     end
 
     attr_reader     :object
 
-    # deserializer usage functions
-
-    def self.from_params( params = {} )
-      self.new({}, params).deserialize
-    end
-
-    def self.permitted_params
-      attrs.keys
-    end
-
     def deserialize
       self.class.attrs.each do |param_key, object_key|
+        # don't bother with keys that aren't in params
+        next unless params[param_key]
+
         # this checks if the object_key is a class that inherits from Deserializer
         if object_key.is_a?(Class) && object_key < Deserializer::Base
           deseralize_nested(param_key, object_key)
@@ -67,6 +70,8 @@ module Deserializer
 
 
     def initialize( object = {}, params = {})
+      raise "#{self.class} error: params cannot be nil" unless params
+
       self.params = params.deep_symbolize_keys
       self.object = object
     end

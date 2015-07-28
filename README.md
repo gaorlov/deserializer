@@ -12,11 +12,11 @@ Let's say we have a bad API create endpoint that takes json that looks something
 {
   "restaurant_id" : 13,
         "user_id" : 6,
-      "dish_name" : "risootton con funghi",
+      "dish_name" : "risotto con funghi",
     "description" : "repulsive beyond belief",
         "ratings" : {
                         "taste" : "terrible",
-                        "color" : "repulsive",
+                        "color" : "horrendous",
                       "texture" : "vile",
                         "smell" : "delightful, somehow"
                     }
@@ -39,7 +39,7 @@ t.string      :smell
 
 what do we do?
 
-Normally, we'd have some params we permit, do some parsing and feed those into DishReview.new, like
+Normally, we'd have some params we permit, do some parsing and feed those into `DishReview.new`, like
 
 ``` ruby
 class DishReviewController < BaseController
@@ -104,7 +104,7 @@ Deserializer acts and looks pretty mich identical to ActiveModel::Serializer. It
 ### Deserializer functions
 
 #### from_params
-`MyDesrializer.from_params(params)` created the json that your AR model will then consume. 
+`MyDeserializer.from_params(params)` created the json that your AR model will then consume. 
 ```ruby
 @review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
 ```
@@ -124,7 +124,7 @@ class PostDeserializer < Deserializer::Base
               :body
 end
 ```
-with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of {title: "lorem", body: "ipsum"}.
+with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of {title: "lorem", body: "ipsum"}`.
 
 #### attribute
 `attribute` is the singular version of `attributes`, but like `ActiveModel::Serializer` it can take a `:key`
@@ -136,7 +136,7 @@ end
 ```
 It is symmetric with `ActiveModel::Serializer`, so that :text is what it will get in params, but :body is what it will insert into the result. 
 
-For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrerializer will produce `{title: "lorem", body: "ipsum"}.
+For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrerializer will produce `{title: "lorem", body: "ipsum"}`.
 
 
 #### has_one

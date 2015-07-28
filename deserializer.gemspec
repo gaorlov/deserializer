@@ -1,20 +1,21 @@
-$:.push File.expand_path("../lib", __FILE__)
+# coding: utf-8
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'deserializer/version'
 
-# Maintain your gem's version:
-require "deserializer/version"
-
-# Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
   s.name        = "deserializer"
   s.version     = Deserializer::VERSION
   s.authors     = ["Greg Orlov"]
   s.email       = ["gaorlov@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/gaorlov/deserializer"
   s.summary     = "deserialization"
   s.description = "conversion from complexy write params to a json blob that an AR model can consume"
   s.license     = "MIT"
 
-  s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
-  s.test_files = Dir["test/**/*"]
+  s.files         = `git ls-files -z`.split("\x0")
+  s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  s.test_files    = s.files.grep(%r{^(test|s|features)/})
+  s.require_paths = ["lib"]
 
 end

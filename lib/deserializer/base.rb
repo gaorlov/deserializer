@@ -51,7 +51,7 @@ module Deserializer
     def deserialize
       self.class.attrs.each do |param_key, object_key|
         # this checks if the object_key is a class that inherits from Deserializer
-        if object_key < Deserializer
+        if object_key.is_a?(Class) && object_key < Deserializer::Base
           deseralize_nested(param_key, object_key)
         else
           object[object_key] = params[param_key]

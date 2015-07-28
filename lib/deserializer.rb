@@ -1,5 +1,5 @@
 require "deserializer/version"
 
 module Deserializer
-  autoload :base, 'deserializer/base'
+  autoload :Base, 'deserializer/base'
 end

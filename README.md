@@ -101,7 +101,19 @@ So what we have here is a wrapper that lets us get away from polluting the contr
 
 Deserializer acts and looks pretty mich identical to ActiveModel::Serializer. It has attributes, attribute, and the has_one association. It does not currently support has_many, as that's an odd thing for a write endpoint to support, but can easily be added. 
 
-### Deserializer Definitions
+### Deserializer functions
+
+#### from_params
+`MyDesrializer.from_params(params)` created the json that your AR model will then consume. 
+```ruby
+@review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
+```
+
+#### permitted_params
+If you're using strong params, this lets you avoid having multiple definitions in fragile arrays. Just call ` MyDeserailzer.permitted_params` and you'll have the full array of keys you expect params to have.
+
+### Deserializer Definition
+To define a deserializer, you inherit from `Deserializer::Base` and define it in much the same way you would an `ActiveModel::Serializer`. 
 
 #### attributes
 This is straight 1:1 mapping from params to the model, so 
@@ -202,7 +214,7 @@ So the example above will combine all of those to look like
 
 ```ruby
 module MyApi
-  module Vsomething
+  module V1
     class DishReviewDeserializer < Deserializer::Base
       attributes  :restaurant_id
                   :user_id
@@ -225,7 +237,7 @@ where RatingsDeserializer looks like
 
 ```ruby
 module MyApi
-  module Vsomething
+  module V1
     class RatingsDeserializer < Deserializer::Base
 
       attributes  :taste,
@@ -242,7 +254,7 @@ All of this allows your controller to be so very small, like
 ```ruby
 class DishReviewsController < YourApiController::Base
   def create
-    @review = DishReview.new( MyApi::Vsomething::DishReviewDeserailzer.from_params(params) )
+    @review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
 
     if @review.save
       # return review

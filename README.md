@@ -1,6 +1,6 @@
 # Deserializer
 
-Deserialization of complex parameters into a hash that an AR model can take. 
+Hash transformation and sanitization. Deserialization of complex parameters into a hash that an AR model can take. 
 
 Lets you have a reverse ActiveModel::Sereializer-like interface that allows for easy create and update without having to write heavy controllers.
 
@@ -141,7 +141,7 @@ For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrer
 
 #### has_one
 NOTE: This is the only association currently supported by `Deserializer`.
-`has_one` expects the param and its deserializer. So for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
+`has_one` expects the param and its deserializer.
 ```ruby 
 class DishDeserializer < Deserializer::Base
   # probably other stuff
@@ -153,7 +153,7 @@ class RatingsDeserializer < Deserializer::Base
               :smell
 end
 ```
-you would get `{ratings: {taste: "bad", smell: "good"}}`
+So for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}` you would get `{ratings: {taste: "bad", smell: "good"}}`
 
 #### Overriding Attribute Methods
 So let's say in the example above, your internal representation of ratings inside `Dish` is actually called `scores`, you can do
@@ -166,7 +166,7 @@ class DishDeserializer < Deserializer::Base
   end
 end
 ```
-which will give you `{scores: {taste: "bad", smell: "good"}}`
+which will give you `{scores: {taste: "bad", smell: "good"}}` for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
 
 or, if you want to deserialize `ratings` into your `dish` object, you can use `object`
 
@@ -179,7 +179,7 @@ class DishDeserializer < Deserializer::Base
   end
 end
 ```
-which will give you `{taste: "bad", smell: "good"}`
+which will give you `{taste: "bad", smell: "good"}` for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
 
 or you can deserialize into another subobject by doing
 ```ruby
@@ -188,7 +188,7 @@ class DishDeserializer < Deserializer::Base
   has_one :ratings, deserializer: RatingsDeserializer
 
   def colors
-    object[:ratings]
+    :ratings
   end
 end
 ```
@@ -263,6 +263,29 @@ class DishReviewsController < YourApiController::Base
     end
   end
 
-  # rest of RUD
+  # RUD
 end
 ```
+
+## Installation
+
+Add this line to your application's Gemfile:
+
+    gem 'deserializer'
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install deserializer
+
+
+## Contributing
+
+1. Fork it ( https://github.com/[my-github-username]/deserializer/fork )
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request

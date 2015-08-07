@@ -53,7 +53,7 @@ module Deserializer
     def deserialize
       self.class.attrs.each do |param_key, object_key|
         # don't bother with keys that aren't in params
-        next unless params[param_key]
+        next unless params.has_key? param_key
 
         # this checks if the object_key is a class that inherits from Deserializer
         if object_key.is_a?(Class) && object_key < Deserializer::Base
@@ -76,7 +76,7 @@ module Deserializer
         raise DeserializerError, class: self.class, message: "params cannot be nil"
       end
 
-      self.params = params.deep_symbolize_keys
+      self.params = params
       self.object = object
     end
 
@@ -86,10 +86,10 @@ module Deserializer
         target = self.send( association )
         
         unless target.is_a? Hash
-          target = object[target] = {}
+          target = object[target] ||= {}
         end
       else
-        target = object[association] = {}
+        target = object[association] ||= {}
       end
 
       deserializer.new( target, params[association] ).deserialize

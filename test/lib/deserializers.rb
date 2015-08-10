@@ -15,6 +15,14 @@ class VanillaHasOneDeserializer < Deserializer::Base
   
 end
 
+class EmptiableAttributeDeserializer < Deserializer::Base
+  attribute :emptiable, ignore_empty: true
+  attribute :nonemptiable, ignore_empty: false
+  
+  attribute :emptiable_with_key,  ignore_empty: true, key: :empty
+  attribute :nonemptiable_with_key,  ignore_empty: false, key: :non_empty
+end
+
 class HasOneWithTargetDeserializer < Deserializer::Base
   attribute   :internal, key: :external
 

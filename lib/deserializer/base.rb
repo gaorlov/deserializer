@@ -8,14 +8,14 @@ module Deserializer
       def attributes(*attrs)
         self.attrs ||= {}
         attrs.each do |attr|
-          self.attrs[attr] = attr
+          self.attrs[attr] = {attr: attr, options: {}}
         end
       end
 
       def attribute(attr, options = {})
         self.attrs ||= {}
         key = options.fetch(:key, attr)
-        self.attrs[key] = attr
+        self.attrs[key] = {attr: attr, options: options}
       end
 
       def has_one( target, opts = {})
@@ -25,7 +25,7 @@ module Deserializer
           raise DeserializerError, class: self, message: "has_one associations need a deserilaizer" 
         end
 
-        self.attrs[target] = deserializer
+        self.attrs[target] = {attr: nil, deserializer: deserializer}
       end
 
       def has_many(*args)
@@ -56,10 +56,13 @@ module Deserializer
         next unless params.has_key? param_key
 
         # this checks if the object_key is a class that inherits from Deserializer
-        if object_key.is_a?(Class) && object_key < Deserializer::Base
-          deseralize_nested(param_key, object_key)
+        if object_key[:deserializer]
+          deseralize_nested(param_key, object_key[:deserializer])
         else
-          object[object_key] = params[param_key]
+          attribute = object_key[:attr]
+          options   = object_key[:options]
+
+          assign_value attribute, params[param_key], options
         end
       end
       object
@@ -93,6 +96,22 @@ module Deserializer
       end
 
       deserializer.new( target, params[association] ).deserialize
+    end
+
+    def assign_value( attribute, value, options = {} )
+      if options[:ignore_empty] && empty?(value)
+        return
+      # other options go here
+      else
+        self.object[attribute] = value
+      end
+    end
+
+    def empty?(value)
+      !value ||
+      value == "" ||
+      value == {} ||
+      value == []
     end
   end
 end

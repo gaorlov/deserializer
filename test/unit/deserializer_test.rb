@@ -44,6 +44,30 @@ class DeserializerTest < Minitest::Test
     assert_equal 6, AttributeDeserializer.from_params( @params )[:user_id]
   end
 
+  def test_ignore_empty_option
+    d = EmptiableAttributeDeserializer
+    
+    assert_equal ({ emptiable: true }), d.from_params( emptiable: true )
+    assert_equal ({ nonemptiable: true }), d.from_params( nonemptiable: true )
+
+    [false, nil, "", [], {}].each do |empty_value|
+      assert_equal ({}), d.from_params( emptiable: empty_value )
+      assert_equal ({ nonemptiable: empty_value }), d.from_params( nonemptiable: empty_value )
+    end
+  end
+
+  def test_ignore_empty_with_key
+    d = EmptiableAttributeDeserializer
+    
+    assert_equal ({ emptiable_with_key: true }), d.from_params( empty: true )
+    assert_equal ({ nonemptiable_with_key: true }), d.from_params( non_empty: true )
+
+    [false, nil, "", [], {}].each do |value|
+      assert_equal ({}), d.from_params( key: value )
+      assert_equal ({ nonemptiable_with_key: value }), d.from_params( non_empty: value )
+    end
+  end
+
   def test_undefined_params_dont_come_through
     assert_equal nil, AttributeDeserializer.from_params( @params )[:i_shouldnt_be_here]
   end

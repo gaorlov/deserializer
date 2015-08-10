@@ -130,7 +130,7 @@ with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of `
 `attribute` is the singular version of `attributes`, but like `ActiveModel::Serializer` it can take a `:key`
 ```ruby
 class PostDeserializer < Deserializer::Base
-  attribute :title
+  attribute :title, ignore_empty: true
   attribute :body, key: :text
 end
 ```
@@ -138,6 +138,7 @@ It is symmetric with `ActiveModel::Serializer`, so that :text is what it will ge
 
 For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrerializer will produce `{title: "lorem", body: "ipsum"}`.
 
+`ignore_empty` is an option to ignore `false`/`nil`/`""`/`[]`/`{}` values that may come into the deserializer. By defualt it will pass the value through. With this option, it will drop the key from the result, turning `{"title" => "", "text" => nil}` into `{}`
 
 #### has_one
 NOTE: This is the only association currently supported by `Deserializer`.

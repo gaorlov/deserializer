@@ -165,7 +165,7 @@ Then, when we if we get a symbolic name from the controller, but want to work wi
 class PostDeserializer < Deserializer::Base
   attribute :title, ignore_empty: true
   attribute :body
-  attribute :post_type_id, key: type, convert_with: to_type_id
+  attribute :post_type_id, key: :type, convert_with: to_type_id
 
   def to_type_id(value)
     Type.find_by_symbolic_name.id

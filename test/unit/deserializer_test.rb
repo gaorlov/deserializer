@@ -121,4 +121,25 @@ class DeserializerTest < Minitest::Test
       BasicDeserializer.belongs_to :explody
     end
   end
+
+  def test_supports_conversions
+    expected = { real_range: (1..4), bad_range: (1..1)}
+    params   = { real_range: [1, 12, 4], bad_range: 1}
+
+    assert_equal expected, ConversionDeserializer.from_params( params )
+  end
+
+  def test_supports_conversions_with_key
+    expected = { real_range: (1..4), bad_range: (1..1)}
+    params   = { real: [1, 4], bad: 1}
+
+    assert_equal expected, KeyedConversionDeserializer.from_params( params )
+  end
+
+  def test_supports_conversions_with_ignore_empty
+    expected = { real_range: (1..4)}
+    params   = { real: [1, 4], bad: nil}
+
+    assert_equal expected, NillableConversionDeserializer.from_params( params )
+  end
 end

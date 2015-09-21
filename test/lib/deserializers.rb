@@ -81,3 +81,33 @@ class HasOneWithObjectTargetDeserializer < Deserializer::Base
     object
   end
 end
+
+class ConversionDeserializer < Deserializer::Base
+  attribute :real_range, convert_with: :to_range
+  attribute :bad_range,  convert_with: :to_range
+
+  def to_range(value)
+    range_array = Array(value)
+    (range_array[0]..range_array[-1])
+  end
+end
+
+class KeyedConversionDeserializer < Deserializer::Base
+  attribute :real_range, convert_with: :to_range, key: :real
+  attribute :bad_range,  convert_with: :to_range, key: :bad
+
+  def to_range(value)
+    range_array = Array(value)
+    (range_array[0]..range_array[-1])
+  end
+end
+
+class NillableConversionDeserializer < Deserializer::Base
+  attribute :real_range, convert_with: :to_range, key: :real, ignore_empty: true
+  attribute :bad_range,  convert_with: :to_range, key: :bad,  ignore_empty: true
+
+  def to_range(value)
+    range_array = Array(value)
+    (range_array[0]..range_array[-1])
+  end
+end

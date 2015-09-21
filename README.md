@@ -140,6 +140,42 @@ For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrer
 
 `ignore_empty` is an option to ignore `false`/`nil`/`""`/`[]`/`{}` values that may come into the deserializer. By defualt it will pass the value through. With this option, it will drop the key from the result, turning `{"title" => "", "text" => nil}` into `{}`
 
+`convert_with` allows the deserializer to deserialize and convert a value at the same time. For example, if we have a `Post` model that looks like
+
+```ruby 
+class Post < ActiveRecord::Base
+  belongs_to :post_type # this is a domain table
+end
+```
+
+and we serialize with 
+```ruby
+class PostSerializer < ActiveModel::Serializer
+  attribute :type
+
+  def type
+    object.post_type.symbolic_name
+  end
+end
+```
+
+Then, when we if we get a symbolic name from the controller, but want to work with an id in the backend, we can do something like:
+
+```ruby
+class PostDeserializer < Deserializer::Base
+  attribute :title, ignore_empty: true
+  attribute :body
+  attribute :post_type_id, key: type, convert_with: to_type_id
+
+  def to_type_id(value)
+    Type.find_by_symbolic_name.id
+  end
+end
+```
+
+which would take the params `{"title" => "lorem", "body" => "ipsum", "type" => "BLAGABLAG"}` and produce `{title: "lorem", body: "ipsum", post_type_id: 1}`
+
+
 #### has_one
 NOTE: This is the only association currently supported by `Deserializer`.
 `has_one` expects the param and its deserializer.

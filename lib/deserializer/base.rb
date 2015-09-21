@@ -101,10 +101,18 @@ module Deserializer
     def assign_value( attribute, value, options = {} )
       if options[:ignore_empty] && empty?(value)
         return
-      # other options go here
-      else
-        self.object[attribute] = value
       end
+      if options[:convert_with]
+        method = options[:convert_with]
+        if self.respond_to? method
+          self.object[attribute] = self.send method, value
+          return
+        end
+      end
+      # other options go here
+      
+      self.object[attribute] = value
+      
     end
 
     def empty?(value)

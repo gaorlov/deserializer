@@ -1,12 +1,13 @@
 # Deserializer
-
-Hash transformation and sanitization. Deserialization of complex parameters into a hash that an AR model can take. 
-
-Lets you have a reverse ActiveModel::Sereializer-like interface that allows for easy create and update without having to write heavy controllers.
+## Features
+- Hash transformation and sanitization
+- Deserialization of complex parameters into a hash that an AR model can take
+- Avoid having multiple definitions in fragile arrays when using strong params
+- Easy create and update from JSON without writing heavy controllers
+- [ActiveModel::Serializer](https://github.com/rails-api/active_model_serializers)-like interface and conventions
 
 ## Problem
-
-Let's say we have a API create endpoint that takes json that looks something like
+Let's say we have an API with an endpoint that takes this JSON:
 
 ```json
 {
@@ -23,7 +24,7 @@ Let's say we have a API create endpoint that takes json that looks something lik
 }
 ```
 
-that goes into a flat DishReview model that looks like
+But this goes into a flat DishReview model:
 
 ```ruby
 t.belongs_to  :restaurant
@@ -37,11 +38,10 @@ t.string      :texture
 t.string      :smell
 ```
 
-what do we do?
+### Solution (No `Deserializer`)
+Permit some params, do some parsing and feed that into `DishReview.new`:
 
-Normally, we'd have some params we permit, do some parsing and feed those into `DishReview.new`, like
-
-``` ruby
+```ruby
 class DishReviewController < BaseController
 
   def create
@@ -93,161 +93,13 @@ class DishReviewController < BaseController
 end
 ```
 
-and that's fine, but kind of annoying, and you have to do this for every action. It makes the controllers heavy, hard to parse, fragile, and really do things that are no longer controller-y. 
+#### What's up with that?
+- You have to do this for every action
+- Controllers are obese, hard to parse and fragile
+- Controllers are doing non-controller-y things
 
-So what we have here is a wrapper that lets us get away from polluting the controller with all of this parsing and lets us build deserializers that look very much like our serializers. 
-
-## Usage
-
-Deserializer acts and looks pretty mich identical to ActiveModel::Serializer. It has attributes, attribute, and the has_one association. It does not currently support has_many, as that's an odd thing for a write endpoint to support, but can easily be added. 
-
-### Deserializer functions
-
-#### from_params
-`MyDeserializer.from_params(params)` created the json that your AR model will then consume. 
-```ruby
-@review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
-```
-
-#### permitted_params
-If you're using strong params, this lets you avoid having multiple definitions in fragile arrays. Just call ` MyDeserailzer.permitted_params` and you'll have the full array of keys you expect params to have.
-
-### Deserializer Definition
-To define a deserializer, you inherit from `Deserializer::Base` and define it in much the same way you would an `ActiveModel::Serializer`. 
-
-#### attributes
-This is straight 1:1 mapping from params to the model, so 
-
-```ruby
-class PostDeserializer < Deserializer::Base
-  attributes  :title,
-              :body
-end
-```
-with params `{"title" => "lorem", "body" => "ipsum"}`, will give you a hash of `{title: "lorem", body: "ipsum"}`.
-
-#### attribute
-`attribute` is the singular version of `attributes`, but like `ActiveModel::Serializer` it can take a `:key`
-```ruby
-class PostDeserializer < Deserializer::Base
-  attribute :title, ignore_empty: true
-  attribute :body, key: :text
-end
-```
-It is symmetric with `ActiveModel::Serializer`, so that :text is what it will get in params, but :body is what it will insert into the result. 
-
-For example with params of `{"title" => "lorem", "text" => "ipsum"}` this desrerializer will produce `{title: "lorem", body: "ipsum"}`.
-
-`ignore_empty` is an option to ignore `false`/`nil`/`""`/`[]`/`{}` values that may come into the deserializer. By defualt it will pass the value through. With this option, it will drop the key from the result, turning `{"title" => "", "text" => nil}` into `{}`
-
-`convert_with` allows the deserializer to deserialize and convert a value at the same time. For example, if we have a `Post` model that looks like
-
-```ruby 
-class Post < ActiveRecord::Base
-  belongs_to :post_type # this is a domain table
-end
-```
-
-and we serialize with 
-```ruby
-class PostSerializer < ActiveModel::Serializer
-  attribute :type
-
-  def type
-    object.post_type.symbolic_name
-  end
-end
-```
-
-Then, when we if we get a symbolic name from the controller, but want to work with an id in the backend, we can do something like:
-
-```ruby
-class PostDeserializer < Deserializer::Base
-  attribute :title, ignore_empty: true
-  attribute :body
-  attribute :post_type_id, key: :type, convert_with: to_type_id
-
-  def to_type_id(value)
-    Type.find_by_symbolic_name.id
-  end
-end
-```
-
-which would take the params `{"title" => "lorem", "body" => "ipsum", "type" => "BLAGABLAG"}` and produce `{title: "lorem", body: "ipsum", post_type_id: 1}`
-
-
-#### has_one
-NOTE: This is the only association currently supported by `Deserializer`.
-`has_one` expects the param and its deserializer.
-```ruby 
-class DishDeserializer < Deserializer::Base
-  # probably other stuff
-  has_one :ratings, deserializer: RatingsDeserializer
-end
-
-class RatingsDeserializer < Deserializer::Base
-  attributes  :taste,
-              :smell
-end
-```
-So for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}` you would get `{ratings: {taste: "bad", smell: "good"}}`
-
-#### Overriding Attribute Methods
-So let's say in the example above, your internal representation of ratings inside `Dish` is actually called `scores`, you can do
-```ruby
-class DishDeserializer < Deserializer::Base
-  has_one :ratings, deserializer: RatingsDeserializer
-
-  def ratings
-    :scores
-  end
-end
-```
-which will give you `{scores: {taste: "bad", smell: "good"}}` for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
-
-or, if you want to deserialize `ratings` into your `dish` object, you can use `object`
-
-```ruby
-class DishDeserializer < Deserializer::Base
-  has_one :ratings, deserializer: RatingsDeserializer
-
-  def ratings
-    object
-  end
-end
-```
-which will give you `{taste: "bad", smell: "good"}` for params `{"ratings" => {"taste" => "bad", "smell" => "good"}}`
-
-or you can deserialize into another subobject by doing
-```ruby
-class DishDeserializer < Deserializer::Base
-  has_one :colors,  deserializer: ColorsDeserializer
-  has_one :ratings, deserializer: RatingsDeserializer
-
-  def colors
-    :ratings
-  end
-end
-```
-which, given params 
-```
-{ 
-  "ratings" => 
-    { 
-      "taste" => "bad",
-      "smell" => "good"
-    }, 
-  "colors" => 
-    { 
-      "color" => "red"
-    }
-}
-```
-, will give you `{ratings: {taste: "bad", smell: "good", color: "red"}}`
-
-### Example
-
-So the example above will combine all of those to look like 
+### Solution (With `Deserializer`)
+`DishReviewDeserializer`:
 
 ```ruby
 module MyApi
@@ -270,7 +122,7 @@ module MyApi
 end
 ```
 
-where RatingsDeserializer looks like
+`RatingsDeserializer`:
 
 ```ruby
 module MyApi
@@ -286,7 +138,7 @@ module MyApi
 end
 ```
 
-All of this allows your controller to be so very small, like
+All of this allows your controller to be so very small:
 
 ```ruby
 class DishReviewsController < YourApiController::Base
@@ -304,24 +156,281 @@ class DishReviewsController < YourApiController::Base
 end
 ```
 
-## Installation
+#### What's up with that?
+- Un-pollutes controllers from all the parsing
+- Builds deserializers that look like our serializers
 
+## Definition
+Inherit from `Deserializer::Base` and define it in much the same  way you would an [ActiveModel::Serializer](https://github.com/rails-api/active_model_serializers).
+
+### attributes
+Use `attributes` for straight mapping from params to the model:
+
+```ruby
+class PostDeserializer < Deserializer::Base
+  attributes  :title,
+              :body
+end
+```
+
+```ruby
+# Example params
+{
+    "title" => "lorem",
+    "body"  => "ipsum"
+}
+# Resulting hash
+   {
+     title: "lorem",
+     body: "ipsum"
+   }
+```
+
+### attribute
+Allows the following customizations for each `attribute` 
+#### :key
+
+```ruby
+class PostDeserializer < Deserializer::Base
+  attribute :title, ignore_empty: true
+  attribute :body, key: :content
+end
+```
+
+`:content` here is what it will get in params while `:body` is what it will be inserted into the result.
+
+```ruby
+# Example params
+{
+    "title"   => "lorem",
+    "content" => "ipsum"
+}
+# Resulting hash
+  {
+    title: "lorem",
+    body: "ipsum"
+  }
+```
+
+#### :ignore_empty
+While `Deserializer`'s default is to pass all values through, this option will drop any key with `false`/`nil`/`""`/`[]`/`{}` values from the result.
+
+```ruby
+# Example params
+{
+    "title" => "",
+    "text"  => nil
+}
+# Resulting hash
+  {}
+```
+
+#### :convert_with
+Allows deserializing and converting a value at the same time. For example:
+
+```ruby
+class Post < ActiveRecord::Base
+  belongs_to :post_type # this is a domain table
+end
+```
+
+If we serialize with
+
+```ruby
+class PostSerializer < ActiveModel::Serializer
+  attribute :type
+
+  def type
+    object.post_type.symbolic_name
+  end
+end
+```
+
+Then, when we get a symbolic name from the controller but want to work with an id in the backend, we can:
+
+```ruby
+class PostDeserializer < Deserializer::Base
+  attribute :title, ignore_empty: true
+  attribute :body
+  attribute :post_type_id, key: :type, convert_with: to_type_id
+
+  def to_type_id(value)
+    Type.find_by_symbolic_name.id
+  end
+end
+```
+
+```ruby
+# Example params
+{
+    "title" => "lorem",
+    "body"  => "ipsum",
+    "type"  => "BLAGABLAG"
+}
+# Resulting hash
+  {
+    title: "lorem",
+    body: "ipsum",
+    post_type_id: 1
+  }
+```
+
+### has_one
+`has_one` association expects a param and its deserializer:
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  # probably other stuff
+  has_one :ratings, deserializer: RatingsDeserializer
+end
+
+class RatingsDeserializer < Deserializer::Base
+  attributes  :taste,
+              :smell
+end
+```
+
+```ruby
+# Example params
+{
+    "ratings" => {
+        "taste" => "bad",
+        "smell" => "good"
+    }
+}
+# Resulting hash
+  {
+    ratings: {
+      taste: "bad",
+      smell: "good"
+    }
+  }
+```
+
+#### Deserialize into a Different Name
+In the example above, if `ratings` inside `Dish` is called `scores` in your ActiveRecord, you can:
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  has_one :ratings, deserializer: RatingsDeserializer
+
+  def ratings
+    :scores
+  end
+end
+```
+
+```ruby
+# Example params
+{
+    "ratings" => {
+        "taste" => "bad",
+        "smell" => "good"
+    }
+}
+# Resulting hash
+  {
+    scores: {
+      taste: "bad",
+      smell: "good"
+    }
+  }
+```
+
+#### Deserialize into Parent Object
+To deserialize `ratings` into the `dish` object, you can use `object`:
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  has_one :ratings, deserializer: RatingsDeserializer
+
+  def ratings
+    object
+  end
+end
+```
+
+```ruby
+# Resulting hash
+  {
+    taste: "bad",
+    smell: "good"
+  }
+```
+
+#### Deserialize into a Different Sub-object
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  has_one :colors,  deserializer: ColorsDeserializer
+  has_one :ratings, deserializer: RatingsDeserializer
+
+  def colors
+    :ratings
+  end
+end
+```
+
+Given params:
+
+```ruby
+# Example params
+{
+  "ratings" =>
+    {
+      "taste" => "bad",
+      "smell" => "good"
+    },
+  "colors" =>
+    {
+      "color" => "red"
+    }
+}
+# Resulting hash
+  {
+    ratings: {
+      taste: "bad",
+      smell: "good",
+      color: "red"
+    }
+  }
+```
+
+### has_many
+Not supported as it's an odd thing for a write endpoint to support, but can easily be added.
+
+## Functions
+### from_params
+`MyDeserializer.from_params(params)` creates the JSON that your AR model will then consume.
+
+```ruby
+@review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
+```
+
+### permitted_params
+Just call `MyDeserailzer.permitted_params` and you'll have the full array of keys you expect params to have.
+
+## Installation
 Add this line to your application's Gemfile:
 
-    gem 'deserializer'
+```
+gem 'deserializer'
+```
 
 And then execute:
 
-    $ bundle
+```
+$ bundle
+```
 
 Or install it yourself as:
 
-    $ gem install deserializer
-
+```
+$ gem install deserializer
+```
 
 ## Contributing
-
-1. Fork it ( https://github.com/[my-github-username]/deserializer/fork )
+1. Fork it ( [https://github.com/[my-github-username]/deserializer/fork](https://github.com/[my-github-username]/deserializer/fork) )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

@@ -1,7 +1,11 @@
 module Deserializer
   class Base
+
+    ## has_one, nested, etc associations
+    include Deserializer::Associatable
+
     class << self
-      attr_accessor :attrs
+      attr_accessor :attrs, :nested_attrs
     
       # deserializer interface functions
 
@@ -16,24 +20,6 @@ module Deserializer
         self.attrs ||= {}
         key = options.fetch(:key, attr)
         self.attrs[key] = {attr: attr, options: options}
-      end
-
-      def has_one( target, opts = {})
-        deserializer = opts[:deserializer]
-
-        unless deserializer
-          raise DeserializerError, class: self, message: "has_one associations need a deserilaizer" 
-        end
-
-        self.attrs[target] = {attr: nil, deserializer: deserializer}
-      end
-
-      def has_many(*args)
-        raise DeserializerError, class: self, message: "has_many is currently unsupported."
-      end
-
-      def belongs_to(*args)
-        raise DeserializerError, class: self, message: "belongs_to is currently unsupported."
       end
 
       # deserializer usage functions
@@ -57,13 +43,18 @@ module Deserializer
 
         # this checks if the object_key is a class that inherits from Deserializer
         if object_key[:deserializer]
-          deseralize_nested(param_key, object_key[:deserializer])
+          deseralize_association(param_key, object_key[:deserializer])
         else
           attribute = object_key[:attr]
           options   = object_key[:options]
 
           assign_value attribute, params[param_key], options
         end
+      end
+
+      self.class.nested_attrs ||= {}
+      self.class.nested_attrs.each do |target, options|
+        deserialize_nested target, options[:deserializer]
       end
       object
     end
@@ -72,7 +63,6 @@ module Deserializer
 
     attr_accessor   :params
     attr_writer     :object
-
 
     def initialize( object = {}, params = {})
       unless params
@@ -83,7 +73,17 @@ module Deserializer
       self.object = object
     end
 
-    def deseralize_nested(association, deserializer)
+    def deseralize_association(association, deserializer)
+      # check for method defining the target object (something, in the example below)
+      #
+      # class ExampleDeserializer < Deserializer::Base
+      #   has_one :something, deserializer: SomethingDeserializer
+      #   
+      #   def something
+      #     object
+      #   end
+      # end
+
       if self.respond_to? association
         
         target = self.send( association )
@@ -96,6 +96,11 @@ module Deserializer
       end
 
       deserializer.new( target, params[association] ).deserialize
+    end
+
+    def deserialize_nested( target, deserializer )
+      target = object[target] ||= {}
+      deserializer.new( target, params ).deserialize
     end
 
     def assign_value( attribute, value, options = {} )

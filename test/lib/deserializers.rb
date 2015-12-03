@@ -111,3 +111,15 @@ class NillableConversionDeserializer < Deserializer::Base
     (range_array[0]..range_array[-1])
   end
 end
+
+class NestedDeserializer < Deserializer::Base
+  attribute :name, key: :attr_1
+  attribute :attr_2
+end
+
+class NestableDeserializer < Deserializer::Base
+  attributes  :id,
+              :attr_1
+
+  nests :nested_object, deserializer: ::NestedDeserializer
+end

@@ -399,6 +399,65 @@ Given params:
 ### has_many
 Not supported as it's an odd thing for a write endpoint to support, but can easily be added.
 
+### nests
+Sometimes you get a flat param list, but want it to be nested for `updated_nested_attributes`
+
+If you have 2 models that look like
+
+```ruby
+class RestaurantLocation
+  belongs_to :address
+  # t.string :name
+end
+
+# where Address is something like
+t.string      :line_1
+t.string      :line_2
+t.string      :city
+t.string      :state
+```
+
+And you want to update them at the same time, as they're closely tied, `nests` lets you define
+
+```ruby
+class ResaturantLocationDeserializer < Deserializer::Base
+  attribute :name
+
+  nests :address, deserializer: AddressDesrializer
+end
+
+class AddressDeserializer
+  attributes  :line_1,
+              :line_2,
+              :city,
+              :state
+end
+```
+And now you can take a single block of json
+
+```ruby
+# Example params into restaurant_location endpoint
+{
+  "name"    => "Little Caesars: Et Two Brute",
+  "line_1"  => "2 Brute St.",
+  "city"    => "Seattle",
+  "state"   => "WA"
+}
+
+# Resulting hash
+{
+     name: "Little Caesars: Et Two Brute",
+  address: {
+      line_1: "2 Brute St",
+        city: "Seattle",
+       state: "WA"
+  }
+}
+
+```
+
+
+
 ## Functions
 ### from_params
 `MyDeserializer.from_params(params)` creates the JSON that your AR model will then consume.

@@ -142,4 +142,17 @@ class DeserializerTest < Minitest::Test
 
     assert_equal expected, NillableConversionDeserializer.from_params( params )
   end
+
+  def test_using_requires_deserializer
+     assert_raises Deserializer::DeserializerError do
+      BasicDeserializer.nests :splosion
+    end
+  end
+
+  def test_supports_using
+    params   = { id: 1, attr_1: "blah", attr_2: "something" }
+    expected = { id: 1, attr_1: "blah", nested_object: { name: "blah", attr_2: "something" } }
+
+    assert_equal expected, NestableDeserializer.from_params( params )
+  end
 end

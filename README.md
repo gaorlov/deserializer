@@ -397,7 +397,49 @@ Given params:
 ```
 
 ### has_many
-Not supported as it's an odd thing for a write endpoint to support, but can easily be added.
+`has_many` association expects a param and its deserializer:
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  # probably other stuff
+  has_many :ratings, deserializer: RatingsDeserializer
+end
+
+class RatingsDeserializer < Deserializer::Base
+  attributes  :user_id,
+              :rating,
+              :comment
+end
+```
+
+```ruby
+# Example params
+{
+  "ratings" => [
+    { "user_id" => 6,
+      "rating" => 3,
+      "comment" => "not bad"
+    },
+    { "user_id" => 25,
+      "rating" => 2,
+      "comment" => "gross"
+    }
+  ]
+}
+# Resulting hash
+  {
+    ratings: [
+      { user_id: 6,
+        rating: 3,
+        comment: "not bad"
+      },
+      { user_id: 25,
+        rating: 2,
+        comment: "gross"
+      }
+    ]
+  }
+```
 
 ### nests
 Sometimes you get a flat param list, but want it to be nested for `updated_nested_attributes`

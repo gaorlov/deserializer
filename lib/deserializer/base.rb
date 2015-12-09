@@ -5,7 +5,7 @@ module Deserializer
     include Deserializer::Associatable
 
     class << self
-      attr_accessor :attrs, :nested_attrs
+      attr_accessor :attrs, :nested_attrs, :associations
     
       # deserializer interface functions
 
@@ -31,26 +31,30 @@ module Deserializer
       def permitted_params
         self.attrs.keys
       end
-
     end
 
     attr_reader     :object
 
     def deserialize
+      self.class.attrs ||= {}
       self.class.attrs.each do |param_key, object_key|
         # don't bother with keys that aren't in params
         next unless params.has_key? param_key
 
         # this checks if the object_key is a class that inherits from Deserializer
-        if object_key[:deserializer]
-          deseralize_association(param_key, object_key[:deserializer])
-        else
-          attribute = object_key[:attr]
-          options   = object_key[:options]
+        attribute = object_key[:attr]
+        options   = object_key[:options]
 
-          assign_value attribute, params[param_key], options
-        end
+        assign_value attribute, params[param_key], options
       end
+
+      # refactor this
+
+      self.class.associations ||= {}
+      self.class.associations.each do |association, options|
+        deserialize_association(association, options)
+      end
+
 
       self.class.nested_attrs ||= {}
       self.class.nested_attrs.each do |target, options|
@@ -73,7 +77,11 @@ module Deserializer
       self.object = object
     end
 
-    def deseralize_association(association, deserializer)
+    def deserialize_association(target, opts)
+      send "deserialize_#{opts[:type]}", target, opts[:deserializer]
+    end
+
+    def deserialize_has_one(association, deserializer)
       # check for method defining the target object (something, in the example below)
       #
       # class ExampleDeserializer < Deserializer::Base
@@ -98,6 +106,13 @@ module Deserializer
       deserializer.new( target, params[association] ).deserialize
     end
 
+    def deserialize_has_many(association, deserializer)
+      target = object[association] ||= []
+      params[association].each do |association_datum|
+        target << deserializer.new( {}, association_datum ).deserialize
+      end
+    end
+
     def deserialize_nested( target, deserializer )
       target = object[target] ||= {}
       deserializer.new( target, params ).deserialize
@@ -116,7 +131,7 @@ module Deserializer
       end
       # other options go here
       
-      self.object[attribute] = value
+      object[attribute] = value
       
     end
 

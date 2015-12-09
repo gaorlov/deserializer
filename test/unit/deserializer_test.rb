@@ -110,12 +110,6 @@ class DeserializerTest < Minitest::Test
     assert_equal expected, HasOneWithObjectTargetDeserializer.from_params( params )
   end
 
-  def test_has_many_unpermitted
-    assert_raises Deserializer::DeserializerError do
-      BasicDeserializer.has_many :explodies
-    end
-  end
-
   def test_belongs_to_unpermitted
     assert_raises Deserializer::DeserializerError do
       BasicDeserializer.belongs_to :explody
@@ -149,10 +143,23 @@ class DeserializerTest < Minitest::Test
     end
   end
 
-  def test_supports_using
+  def test_supports_nested
     params   = { id: 1, attr_1: "blah", attr_2: "something" }
     expected = { id: 1, attr_1: "blah", nested_object: { name: "blah", attr_2: "something" } }
 
     assert_equal expected, NestableDeserializer.from_params( params )
+  end
+
+  def test_using_requires_deserializer
+     assert_raises Deserializer::DeserializerError do
+      BasicDeserializer.has_many :splosions
+    end
+  end
+
+  def test_supports_using
+    params   = { id: 1, attributes: [{user: 6, text: "lol"}, {user: 6, text: "something"}] }
+    expected = { id: 1, attributes: [{user_id: 6, text: "lol"}, {user_id: 6, text: "something"}] }
+
+    assert_equal expected, HasManyDeserializer.from_params( params )
   end
 end

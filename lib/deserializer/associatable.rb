@@ -11,11 +11,19 @@ module Deserializer
             raise DeserializerError, class: self, message: "has_one associations need a deserilaizer" 
           end
 
-          self.attrs[target] = { attr: nil, deserializer: deserializer }
+          self.associations ||= {}
+          self.associations[target] = { deserializer: deserializer, type: :has_one }
         end
 
-        def has_many(*args)
-          raise DeserializerError, class: self, message: "has_many is intentionally unsupported."
+        def has_many( target, opts = {})
+          deserializer = opts[:deserializer]
+
+          unless deserializer
+            raise DeserializerError, class: self, message: "has_many associations need a deserilaizer" 
+          end
+
+          self.associations ||= {}
+          self.associations[target] = { deserializer: deserializer, type: :has_many }
         end
 
         def belongs_to(*args)

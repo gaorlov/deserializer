@@ -82,6 +82,8 @@ module Deserializer
     end
 
     def deserialize_has_one(association, deserializer)
+      return unless params[association]
+
       # check for method defining the target object (something, in the example below)
       #
       # class ExampleDeserializer < Deserializer::Base
@@ -107,6 +109,8 @@ module Deserializer
     end
 
     def deserialize_has_many(association, deserializer)
+      return unless params[association]
+
       target = object[association] ||= []
       params[association].each do |association_datum|
         target << deserializer.new( {}, association_datum ).deserialize

@@ -150,16 +150,28 @@ class DeserializerTest < Minitest::Test
     assert_equal expected, NestableDeserializer.from_params( params )
   end
 
-  def test_using_requires_deserializer
+  def test_has_many_requires_deserializer
      assert_raises Deserializer::DeserializerError do
       BasicDeserializer.has_many :splosions
     end
   end
 
-  def test_supports_using
+  def test_supports_has_many
     params   = { id: 1, attributes: [{user: 6, text: "lol"}, {user: 6, text: "something"}] }
     expected = { id: 1, attributes: [{user_id: 6, text: "lol"}, {user_id: 6, text: "something"}] }
 
     assert_equal expected, HasManyDeserializer.from_params( params )
+  end
+
+  def test_has_many_handles_no_input
+    assert_equal ({}), HasManyDeserializer.from_params( {} )
+  end
+
+  def test_has_one_handles_no_input
+    assert_equal ({}), VanillaHasOneDeserializer.from_params( {} )
+  end
+
+    def test_nested_handles_no_input
+    assert_equal ({nested_object: {}}), NestableDeserializer.from_params( {} )
   end
 end

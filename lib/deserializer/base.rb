@@ -78,12 +78,14 @@ module Deserializer
     end
 
     def deserialize_association(target, opts)
-      send "deserialize_#{opts[:type]}", target, opts[:deserializer]
+      send "deserialize_#{opts[:type]}", target, opts
     end
 
-    def deserialize_has_one(association, deserializer)
+    def deserialize_has_one(association, opts)
       return unless params[association]
 
+      deserializer = opts[:deserializer]
+      
       # check for method defining the target object (something, in the example below)
       #
       # class ExampleDeserializer < Deserializer::Base
@@ -95,7 +97,7 @@ module Deserializer
       # end
 
       if self.respond_to? association
-        
+
         target = self.send( association )
         
         unless target.is_a? Hash
@@ -108,11 +110,16 @@ module Deserializer
       deserializer.new( target, params[association] ).deserialize
     end
 
-    def deserialize_has_many(association, deserializer)
-      return unless params[association]
+    def deserialize_has_many(association, opts)
+      key = opts[:key]
+
+      return unless params[key]
+      
+      deserializer = opts[:deserializer]
 
       target = object[association] ||= []
-      params[association].each do |association_datum|
+      
+      params[key].each do |association_datum|
         target << deserializer.new( {}, association_datum ).deserialize
       end
     end

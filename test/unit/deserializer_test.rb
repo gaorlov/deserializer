@@ -171,7 +171,14 @@ class DeserializerTest < Minitest::Test
     assert_equal ({}), VanillaHasOneDeserializer.from_params( {} )
   end
 
-    def test_nested_handles_no_input
+  def test_nested_handles_no_input
     assert_equal ({nested_object: {}}), NestableDeserializer.from_params( {} )
+  end
+
+  def test_has_many_supports_key
+    params   = { id: 1, orders: [{user: 6, text: "lol"}, {user: 6, text: "something"}] }
+    expected = { order_attributes: [{user_id: 6, text: "lol"}, {user_id: 6, text: "something"}] }
+
+    assert_equal expected, KeyedHasManyDeserializer.from_params( params )
   end
 end

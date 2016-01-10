@@ -23,7 +23,8 @@ module Deserializer
           end
 
           self.associations ||= {}
-          self.associations[target] = { deserializer: deserializer, type: :has_many }
+          key = opts.fetch(:key, target)
+          self.associations[target] = { key: key, deserializer: deserializer, type: :has_many }
         end
 
         def belongs_to(*args)

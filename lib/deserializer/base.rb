@@ -2,65 +2,32 @@ module Deserializer
   class Base
 
     ## has_one, nested, etc associations
-    include Deserializer::Associatable
+    include Deserializer::Attributable
 
     class << self
-      attr_accessor :attrs, :nested_attrs, :associations
-    
-      # deserializer interface functions
-
-      def attributes(*attrs)
-        self.attrs ||= {}
-        attrs.each do |attr|
-          self.attrs[attr] = {attr: attr, options: {}}
-        end
-      end
-
-      def attribute(attr, options = {})
-        self.attrs ||= {}
-        key = options.fetch(:key, attr)
-        self.attrs[key] = {attr: attr, options: options}
-      end
+      attr_accessor :__attrs
 
       # deserializer usage functions
 
       def from_params( params = {} )
-        self.new({}, params).deserialize
+        self.new( params ).deserialize
       end
 
       def permitted_params
-        self.attrs.keys
+        self.__attrs.map(&:name)
       end
     end
 
     attr_reader     :object
 
     def deserialize
-      self.class.attrs ||= {}
-      self.class.attrs.each do |param_key, object_key|
-        # don't bother with keys that aren't in params
-        next unless params.has_key? param_key
 
-        # this checks if the object_key is a class that inherits from Deserializer
-        attribute = object_key[:attr]
-        options   = object_key[:options]
+      target = {}
 
-        assign_value attribute, params[param_key], options
+      # deserialize
+      self.class.attrs.each do |attr|
+        target.merge attr.to_hash(params)
       end
-
-      # refactor this
-
-      self.class.associations ||= {}
-      self.class.associations.each do |association, options|
-        deserialize_association(association, options)
-      end
-
-
-      self.class.nested_attrs ||= {}
-      self.class.nested_attrs.each do |target, options|
-        deserialize_nested target, options[:deserializer]
-      end
-      object
     end
 
     protected
@@ -68,32 +35,93 @@ module Deserializer
     attr_accessor   :params
     attr_writer     :object
 
-    def initialize( object = {}, params = {})
+    def initialize( params = {})
       unless params
         raise DeserializerError, class: self.class, message: "params cannot be nil"
       end
 
       self.params = params
-      self.object = object
+    end
+  end
+end
+
+
+module Deserializer
+  class Attribute
+
+    attr_reader :name
+
+    def initialize( name, opts = {} )
+      self.name = name
+      self.opts = opts
     end
 
-    def deserialize_association(target, opts)
-      send "deserialize_#{opts[:type]}", target, opts[:deserializer]
+    # simple object
+    # { key => value }
+
+    # has_* object
+    # { key => { deserialized obejct }}
+
+    # has_one :whatever; where def wahtever{ object }
+    # { object } 
+    def to_hash( params )
+      return {} unless params[key]
+      tuple( params )
     end
 
-    def deserialize_has_one(association, deserializer)
-      return unless params[association]
+    private
 
-      # check for method defining the target object (something, in the example below)
-      #
-      # class ExampleDeserializer < Deserializer::Base
-      #   has_one :something, deserializer: SomethingDeserializer
-      #   
-      #   def something
-      #     object
-      #   end
-      # end
+    attr_accessor :opts, :value
+    attr_writer :name
 
+    def key
+      @key ||= opts.fetch :key, name
+    end
+
+    def tuple( params = {} )
+      value = value( params )
+      if value == :ignore
+        {}
+      else
+        { name => value }
+      end
+    end
+
+    def value( params = {} )
+      return "not implemented"
+    end
+  end
+end
+
+module Deserializer
+  class AssociationAttribute < Attribute
+    
+    private
+
+    def deserializer
+      opts[:deserializer]
+    end
+  end
+end
+
+module Deserializer
+  class HasManyAttribute < AssociationAttribute
+
+    def value( params )
+      target = []
+      params[key].each do |association_datum|
+        target << deserializer.from_params( association_datum )
+      end
+
+    end
+  end
+end
+
+module Deserializer
+  class HasOneAttribute < AssociationAttribute
+
+    def value( params )
+      # not sure what to do about this
       if self.respond_to? association
         
         target = self.send( association )
@@ -106,78 +134,48 @@ module Deserializer
       end
 
       # have you tried merging?
-      target.merge(deserializer.new( {}, params[association] ).deserialize)
+      deserializer.from_params( params[key] )
     end
+  end
+end
 
-    def deserialize_has_many(association, deserializer)
-      return unless params[association]
+module Deserializer
+  class NestedAttribute < AssociationAttribute
 
-      target = object[association] ||= []
-      params[association].each do |association_datum|
-        target << deserializer.new( {}, association_datum ).deserialize
+    def to_hash( params )
+      { name => deserializer.from_params( params ) }
+    end
+  end
+end
+
+
+module Deserializer
+  class ValueAttribute < Attribute
+
+    def value( params )
+      value = params[name]
+      if opts[:ignore_empty] && empty?(value)
+        return :ignore
       end
-    end
-
-    def deserialize_nested( target, deserializer )
-      target = object[target] ||= {}
-      deserializer.new( {target}, params ).deserialize
-    end
-
-    def assign_value( attribute, value, options = {} )
-      if options[:ignore_empty] && empty?(value)
-        return
-      end
-      if options[:convert_with]
-        method = options[:convert_with]
+      # what do? 
+      if opts[:convert_with]
+        method = opts[:convert_with]
         if self.respond_to? method
-          self.object[attribute] = self.send method, value
-          return
+          return self.send method, value
         end
       end
       # other options go here
       
-      object[attribute] = value
-      
+      value
     end
 
-    def empty?(value)
+    private
+
+    def self.empty?(value)
       !value ||
       value == "" ||
       value == {} ||
       value == []
     end
-  end
-end
-
-self << class
-  def attribute name, opts = {}
-    self.attrs = Attribute.new name, opts
-  end
-
-    # deserialize
-    attrs.each do |attr|
-      target.merge attr.to_hash(params)
-
-
-
-module Deserializer
-  class Attribute
-    def initialize( name, opts = {} )
-    end
-
-    # simple object
-    # { key => value }
-
-    # has_* object
-    # { key => { deserialized obejct }}
-
-    # has_one :whatever; where def wahtever{ object }
-    # { object } 
-    def to_hash( params )
-    end
-
-    private
-
-    attr_accessor :opts
   end
 end

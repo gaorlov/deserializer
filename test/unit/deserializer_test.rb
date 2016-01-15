@@ -20,16 +20,16 @@ class DeserializerTest < Minitest::Test
     assert_equal ({user_id: 6, text: "text"}) , BasicDeserializer.from_params( @params )
   end
 
-  def test_permitted_params
-    assert_equal [:user_id, :text] , BasicDeserializer.permitted_params
-  end
-
   def test_does_not_eat_false_or_nil_values
     params = {  user_id: nil,
                 text: false,
                 i_sholdnt_be_here: :should_i_now }
                 
     assert_equal ({user_id: nil, text: false}) , BasicDeserializer.from_params( params )
+  end
+
+  def test_permitted_params
+    assert_equal [:user_id, :text] , BasicDeserializer.permitted_params
   end
 
   def test_permitted_params_with_attr_key
@@ -70,6 +70,27 @@ class DeserializerTest < Minitest::Test
 
   def test_undefined_params_dont_come_through
     assert_equal nil, AttributeDeserializer.from_params( @params )[:i_shouldnt_be_here]
+  end
+
+  def test_supports_conversions
+    expected = { real_range: (1..4), bad_range: (1..1)}
+    params   = { real_range: [1, 12, 4], bad_range: 1}
+
+    assert_equal expected, ConversionDeserializer.from_params( params )
+  end
+
+  def test_supports_conversions_with_key
+    expected = { real_range: (1..4), bad_range: (1..1)}
+    params   = { real: [1, 4], bad: 1}
+
+    assert_equal expected, KeyedConversionDeserializer.from_params( params )
+  end
+
+  def test_supports_conversions_with_ignore_empty
+    expected = { real_range: (1..4)}
+    params   = { real: [1, 4], bad: nil}
+
+    assert_equal expected, NillableConversionDeserializer.from_params( params )
   end
 
   def test_has_one
@@ -116,29 +137,8 @@ class DeserializerTest < Minitest::Test
     end
   end
 
-  def test_supports_conversions
-    expected = { real_range: (1..4), bad_range: (1..1)}
-    params   = { real_range: [1, 12, 4], bad_range: 1}
-
-    assert_equal expected, ConversionDeserializer.from_params( params )
-  end
-
-  def test_supports_conversions_with_key
-    expected = { real_range: (1..4), bad_range: (1..1)}
-    params   = { real: [1, 4], bad: 1}
-
-    assert_equal expected, KeyedConversionDeserializer.from_params( params )
-  end
-
-  def test_supports_conversions_with_ignore_empty
-    expected = { real_range: (1..4)}
-    params   = { real: [1, 4], bad: nil}
-
-    assert_equal expected, NillableConversionDeserializer.from_params( params )
-  end
-
-  def test_using_requires_deserializer
-     assert_raises Deserializer::DeserializerError do
+  def test_tests_requires_deserializer
+    assert_raises Deserializer::DeserializerError do
       BasicDeserializer.nests :splosion
     end
   end
@@ -151,7 +151,7 @@ class DeserializerTest < Minitest::Test
   end
 
   def test_has_many_requires_deserializer
-     assert_raises Deserializer::DeserializerError do
+    assert_raises Deserializer::DeserializerError do
       BasicDeserializer.has_many :splosions
     end
   end
@@ -171,7 +171,7 @@ class DeserializerTest < Minitest::Test
     assert_equal ({}), VanillaHasOneDeserializer.from_params( {} )
   end
 
-    def test_nested_handles_no_input
+  def test_nested_handles_no_input
     assert_equal ({nested_object: {}}), NestableDeserializer.from_params( {} )
   end
 end

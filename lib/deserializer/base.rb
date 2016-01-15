@@ -105,7 +105,8 @@ module Deserializer
         target = object[association] ||= {}
       end
 
-      deserializer.new( target, params[association] ).deserialize
+      # have you tried merging?
+      target.merge(deserializer.new( {}, params[association] ).deserialize)
     end
 
     def deserialize_has_many(association, deserializer)
@@ -119,7 +120,7 @@ module Deserializer
 
     def deserialize_nested( target, deserializer )
       target = object[target] ||= {}
-      deserializer.new( target, params ).deserialize
+      deserializer.new( {target}, params ).deserialize
     end
 
     def assign_value( attribute, value, options = {} )
@@ -145,5 +146,38 @@ module Deserializer
       value == {} ||
       value == []
     end
+  end
+end
+
+self << class
+  def attribute name, opts = {}
+    self.attrs = Attribute.new name, opts
+  end
+
+    # deserialize
+    attrs.each do |attr|
+      target.merge attr.to_hash(params)
+
+
+
+module Deserializer
+  class Attribute
+    def initialize( name, opts = {} )
+    end
+
+    # simple object
+    # { key => value }
+
+    # has_* object
+    # { key => { deserialized obejct }}
+
+    # has_one :whatever; where def wahtever{ object }
+    # { object } 
+    def to_hash( params )
+    end
+
+    private
+
+    attr_accessor :opts
   end
 end

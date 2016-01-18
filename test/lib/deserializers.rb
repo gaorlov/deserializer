@@ -123,3 +123,8 @@ class NestableDeserializer < Deserializer::Base
 
   nests :nested_object, deserializer: ::NestedDeserializer
 end
+
+class HasManyDeserializer < Deserializer::Base
+  attribute   :id
+  has_many :attributes, deserializer: AttributeDeserializer
+end

@@ -29,8 +29,7 @@ But this goes into a flat DishReview model:
 ```ruby
 t.belongs_to  :restaurant
 t.belongs_to  :user
-# field name different from API
-t.string      :name
+t.string      :name # field name different from API (dish_name)
 t.string      :description
 t.string      :taste
 t.string      :color
@@ -46,7 +45,7 @@ class DishReviewController < BaseController
 
   def create
     review_params = get_review_params(params)
-    @review = ProfessionalReview.new(review_params)
+    @review = DishReview.new(review_params)
     if @review.save
       # return review
     else
@@ -85,10 +84,7 @@ class DishReviewController < BaseController
   end
 
   def valid_rating?(rating)
-    @@ratings ||= ["overall", "trusthworthy", "responsive", "knowledgeable", "communication"]
-
-    @@ratings.include? rating
-
+    ["taste", "color", "texture", "smell"].include? rating
   end
 end
 ```
@@ -439,6 +435,64 @@ end
       }
     ]
   }
+```
+
+#### key
+
+You can deserialize a `has_many` association into a different key from what the json gives you. For example:
+```json
+{
+  id: 6,
+  name: "mac & cheese",
+  aliases: [
+    {
+      id: 83,
+      name: "macaroni and cheese"
+    },
+    {
+      id: 86,
+      name: "cheesy pasta"
+    }
+  ]
+}
+```
+
+but your model is
+
+```ruby
+class Dish
+  has_many :aliases
+  accepted_nested_attributes_for :aliases
+end
+```
+instead of renaming the hash in the controller, you can do
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  attributes  :id,
+              :name
+
+  has_many :aliases_attributes, deserializer: AliasDeserializer, key: :aliases
+end
+```
+
+which would output
+
+```ruby
+{
+  id: 6,
+  name: "mac & cheese",
+  aliases_attributes: [
+    {
+      id: 83,
+      name: "macaroni and cheese"
+    },
+    {
+      id: 86,
+      name: "cheesy pasta"
+    }
+  ]
+}
 ```
 
 ### nests

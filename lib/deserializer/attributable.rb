@@ -7,24 +7,24 @@ module Deserializer
         # deserializer interface functions
 
         def attributes( *attrs )
-          self.__attrs ||= []
+          self.__attrs = __attrs.dup
           attrs.each do |attr|
-            __attrs << Attribute::Attribute.new( Attribute::ValueAttribute, attr, {} )
+            attribute( attr, {} )
           end
         end
 
         def attribute( name, opts = {} )
-          self.__attrs ||= []
-          __attrs << Attribute::Attribute.new( Attribute::ValueAttribute, name, opts )
+          attribute = Attribute::Attribute.new( Attribute::ValueAttribute, name, opts )
+          self.__attrs = __attrs.merge attribute.key => attribute
         end
 
         def has_one( name, opts = {} )
           unless opts[:deserializer]
             raise DeserializerError, class: self, message: "has_one associations need a deserilaizer" 
           end
-
-          self.__attrs ||= []
-          __attrs << Attribute::Attribute.new( Attribute::HasOneAssociation, name, opts )
+          
+          attribute = Attribute::Attribute.new( Attribute::HasOneAssociation, name, opts )
+          self.__attrs = __attrs.merge attribute.key => attribute
         end
 
         def has_many( name, opts = {} )
@@ -32,8 +32,8 @@ module Deserializer
             raise DeserializerError, class: self, message: "has_many associations need a deserilaizer" 
           end
 
-          self.__attrs ||= []
-          __attrs << Attribute::Attribute.new( Attribute::HasManyAssociation, name, opts )
+          attribute = Attribute::Attribute.new( Attribute::HasManyAssociation, name, opts )
+          self.__attrs = __attrs.merge attribute.key => attribute
         end
 
         def belongs_to( *args )
@@ -45,8 +45,8 @@ module Deserializer
             raise DeserializerError, class: self, message: "nested associations need a deserilaizer" 
           end
 
-          self.__attrs ||= []
-          __attrs << Attribute::Attribute.new( Attribute::NestedAssociation, name, opts )
+          attribute = Attribute::Attribute.new( Attribute::NestedAssociation, name, opts )
+          self.__attrs = __attrs.merge attribute.key => attribute
         end
       end
     end

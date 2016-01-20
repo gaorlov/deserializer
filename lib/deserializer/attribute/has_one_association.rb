@@ -18,15 +18,6 @@ module Deserializer
           if target == object.object
             return value
 
-          # has_one :thing, deserializer: ThingDeserializer
-          # has_one :gniht, deserializer: GnihtDeserializer
-          #
-          # def thing
-          #   object[:gniht]
-          # end
-          elsif target.is_a? Hash
-            return target.merge value
-
           # has_one :thing, deserializer: GnihtDeserializer
           #
           # def thing

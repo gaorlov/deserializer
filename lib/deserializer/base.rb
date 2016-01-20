@@ -4,17 +4,18 @@ module Deserializer
     ## atribute, has_one, nested, etc associations
     include Deserializer::Attributable
 
+    class_attribute :__attrs
+    self.__attrs = {}
     class << self
-      attr_accessor :__attrs
-
+      
       # deserializer usage functions
 
       def from_params( params = {} )
-        self.new( params ).deserialize
+        new( params ).deserialize
       end
 
       def permitted_params
-        self.__attrs.map(&:key)
+        __attrs.keys
       end
     end
 
@@ -25,7 +26,7 @@ module Deserializer
       object ||= {}
 
       # deserialize
-      self.class.__attrs.each do |attr|
+      self.class.__attrs.each do |_, attr|
         object.merge!( attr.to_hash( params, self ) ) do |key, old_value, new_value|
           # in the case that 2 has_ones merge into the same key. Not sure i want to support this
           if old_value.is_a?( Hash ) && new_value.is_a?( Hash )

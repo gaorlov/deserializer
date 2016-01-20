@@ -174,4 +174,14 @@ class DeserializerTest < Minitest::Test
   def test_nested_handles_no_input
     assert_equal ({nested_object: {}}), NestableDeserializer.from_params( {} )
   end
+
+  def test_can_inherit_from_other_deserializer
+    base_permitted_params = HasOneWithTargetDeserializer.permitted_params
+
+    assert_equal [:external, :thing], base_permitted_params, "inheritance broke the base class"
+    
+    inherited_permitted_params = base_permitted_params + [:this, :that, :created_by]
+    
+    assert_equal inherited_permitted_params, InheritedDeserializer.permitted_params
+  end
 end

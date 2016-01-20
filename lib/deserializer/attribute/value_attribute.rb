@@ -5,7 +5,7 @@ module Deserializer
       def value( params )
         value = params[key]
 
-        if opts[:ignore_empty] && empty?(value)
+        if opts[:ignore_empty] && value.blank?
           return :ignore
         end
         
@@ -18,15 +18,6 @@ module Deserializer
         # other options go here
         
         value
-      end
-
-      private
-
-      def empty?(value)
-        !value ||
-        value == "" ||
-        value == {} ||
-        value == []
       end
     end
   end

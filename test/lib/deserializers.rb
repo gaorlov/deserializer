@@ -128,3 +128,10 @@ class HasManyDeserializer < Deserializer::Base
   attribute   :id
   has_many :attributes, deserializer: AttributeDeserializer
 end
+
+class InheritedDeserializer < HasOneWithTargetDeserializer
+  attributes  :this,
+              :that
+
+  attribute   :created_by
+end

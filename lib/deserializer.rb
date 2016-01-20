@@ -1,6 +1,8 @@
 require "deserializer/version"
 require 'active_support'
 require 'active_support/concern'
+require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/class/attribute'
 
 module Deserializer
   autoload :Attribute,          'deserializer/attribute'

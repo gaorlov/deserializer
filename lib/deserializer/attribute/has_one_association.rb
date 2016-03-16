@@ -3,7 +3,7 @@ module Deserializer
     class HasOneAssociation < Association
 
       def to_hash( params )
-        return {} unless params[name]
+        return {} unless params.has_key? key
         value = deserializer.from_params( params[key] )
    
         if object.respond_to? name
@@ -27,7 +27,7 @@ module Deserializer
             return { target => value }
           end
         else
-          return { key => value }
+          return { name => value }
         end
       end
     end

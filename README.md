@@ -392,6 +392,55 @@ Given params:
   }
 ```
 
+#### key
+
+You can deserialize a `has_one` association into a different key from what the json gives you. For example:
+```json
+{
+  id: 6,
+  name: "mac & cheese",
+  alias:
+  {
+    id: 83,
+    name: "macaroni and cheese"
+  }
+}
+```
+
+but your model is
+
+```ruby
+class Dish
+  has_one :alias
+  accepted_nested_attributes_for :alias
+end
+```
+instead of renaming the hash in the controller, you can do
+
+```ruby
+class DishDeserializer < Deserializer::Base
+  attributes  :id,
+              :name
+
+  has_one :alias_attributes, deserializer: AliasDeserializer, key: :alias
+end
+```
+
+which would output
+
+```ruby
+{
+  id: 6,
+  name: "mac & cheese",
+  alias_attributes:
+  {
+    id: 83,
+    name: "macaroni and cheese"
+  }
+}
+```
+
+
 ### has_many
 `has_many` association expects a param and its deserializer:
 

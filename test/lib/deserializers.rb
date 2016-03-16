@@ -135,3 +135,14 @@ class InheritedDeserializer < HasOneWithTargetDeserializer
 
   attribute   :created_by
 end
+
+class KeyedHasManyDeserializer < Deserializer::Base
+  attribute   :id
+  has_many :special_attributes, deserializer: AttributeDeserializer, key: :attributes
+end
+
+class KeyedHasOneDeserializer < Deserializer::Base
+  attribute   :internal, key: :external
+
+  has_one :user_info, deserializer: ::BasicDeserializer, key: :thing
+end

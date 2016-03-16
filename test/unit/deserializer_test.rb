@@ -99,6 +99,12 @@ class DeserializerTest < Minitest::Test
     assert_equal expected, VanillaHasOneDeserializer.from_params( params )
   end
 
+  def test_has_one_supports_key
+    expected = { internal: :thing, user_info: { user_id: 6, text: "text" }}
+    params   = { external: :thing, thing: @params }
+    assert_equal expected, KeyedHasOneDeserializer.from_params( params )
+  end
+
   def test_has_one_requires_deserializer
     assert_raises Deserializer::DeserializerError do
       BasicDeserializer.has_one :splosion
@@ -165,6 +171,13 @@ class DeserializerTest < Minitest::Test
 
   def test_has_many_handles_no_input
     assert_equal ({}), HasManyDeserializer.from_params( {} )
+  end
+
+  def test_has_many_supports_key
+    params   = { id: 1, attributes: [{user: 6, text: "lol"}, {user: 6, text: "something"}] }
+    expected = { id: 1, special_attributes: [{user_id: 6, text: "lol"}, {user_id: 6, text: "something"}] }
+
+    assert_equal expected, KeyedHasManyDeserializer.from_params( params )
   end
 
   def test_has_one_handles_no_input

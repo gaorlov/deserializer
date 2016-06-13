@@ -139,7 +139,7 @@ All of this allows your controller to be so very small:
 ```ruby
 class DishReviewsController < YourApiController::Base
   def create
-    @review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
+    @review = DishReview.new( MyApi::V1::DishReviewDeserializer.from_params(params) )
 
     if @review.save
       # return review
@@ -183,7 +183,7 @@ end
 ```
 
 ### attribute
-Allows the following customizations for each `attribute` 
+Allows the following customizations for each `attribute`
 #### :key
 
 ```ruby
@@ -568,7 +568,7 @@ And you want to update them at the same time, as they're closely tied, `nests` l
 class ResaturantLocationDeserializer < Deserializer::Base
   attribute :name
 
-  nests :address, deserializer: AddressDesrializer
+  nests :address, deserializer: AddressDeserializer
 end
 
 class AddressDeserializer
@@ -608,11 +608,11 @@ And now you can take a single block of json
 `MyDeserializer.from_params(params)` creates the JSON that your AR model will then consume.
 
 ```ruby
-@review = DishReview.new( MyApi::V1::DishReviewDeserailzer.from_params(params) )
+@review = DishReview.new( MyApi::V1::DishReviewDeserializer.from_params(params) )
 ```
 
 ### permitted_params
-Just call `MyDeserailzer.permitted_params` and you'll have the full array of keys you expect params to have.
+Just call `MyDeserializer.permitted_params` and you'll have the full array of keys you expect params to have.
 
 ## Installation
 Add this line to your application's Gemfile:
@@ -634,7 +634,7 @@ $ gem install deserializer
 ```
 
 ## Contributing
-1. Fork it ( [https://github.com/[my-github-username]/deserializer/fork](https://github.com/[my-github-username]/deserializer/fork) )
+1. Fork it ( [https://github.com/gaorlov/deserializer/fork](https://github.com/gaorlov/deserializer/fork) )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

@@ -146,3 +146,7 @@ class KeyedHasOneDeserializer < Deserializer::Base
 
   has_one :user_info, deserializer: ::BasicDeserializer, key: :thing
 end
+
+class JsonApiDeserializer < Deserializer::JsonApi
+  attribute :user_info, deserializer: ::BasicDeserializer, key: :thing
+end

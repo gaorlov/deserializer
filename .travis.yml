@@ -38,3 +38,5 @@ matrix:
       gemfile: gemfiles/4.0.gemfile
     - rvm: 2.9
       gemfile: gemfiles/5.0.gemfile
+before_install:
+  - gem install bundler -v 1.6

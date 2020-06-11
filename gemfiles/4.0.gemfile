@@ -3,6 +3,8 @@
 source "https://rubygems.org"
 
 gem "rake"
-gem "activesupport", "~> 4.0.13"
+gem "activesupport", "~> 4.0.0"
+gem 'simplecov', :group => :test
+gem 'minitest', :group => :test
 
 gemspec :path => "../"

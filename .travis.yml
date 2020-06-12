@@ -29,4 +29,4 @@ matrix:
     - rvm: 2.7
       gemfile: gemfiles/5.0.gemfile
 before_install:
-  - gem install bundler -v 1.17.3 || 
+  - gem install bundler -v 1.17.3 

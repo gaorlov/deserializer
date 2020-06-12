@@ -20,7 +20,6 @@ Gem::Specification.new do |s|
 
   s.add_dependency "activesupport", ">= 5.0.0"
 
-  s.add_development_dependency "bundler", "~> 1.6"
   s.add_development_dependency "rake"
   s.add_development_dependency "m", "~> 1.3.1"
 end

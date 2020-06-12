@@ -9,4 +9,5 @@ module Deserializer
   autoload :Attributable,       'deserializer/attributable'
   autoload :Base,               'deserializer/base'
   autoload :DeserializerError,  'deserializer/deserializer_error'
+  autoload :JsonApi,            'deserializer/json_api'
 end

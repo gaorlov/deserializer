@@ -197,4 +197,20 @@ class DeserializerTest < Minitest::Test
     
     assert_equal inherited_permitted_params, InheritedDeserializer.permitted_params
   end
+
+  def test_json_api_yields_block
+    attr_val =  "some user attribute"
+    payload_type = "json_api_type"
+
+    params = { data: { type: payload_type, attributes: { thing: @params } }}
+    expected = { user_info: @params }
+
+    assert_equal(
+      expected,
+      JsonApiDeserializer.from_params( params ) do |id, type|
+        assert_equal nil, id
+        assert_equal payload_type, type
+      end
+    )
+  end
 end
